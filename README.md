@@ -1,32 +1,51 @@
-# Prism Plunge
+# UniDrop
 
-Open index.html in a browser to play. No install, build, network, or external assets required.
+A tiny unicorn adventure through seven colourful skies. Your unicorn bounces automatically—rotate the tower, find the gaps, and drop from platform to platform. Avoid black surfaces and keep heading down.
 
-- Drag horizontally or hold Left/Right (A/D) to rotate the tower. The unicorn bounces automatically.
-- Flip reverses drag and keyboard controls and remembers your preference.
-- R or Restart restarts the current level. Sound is optional; each cleared platform plays the next melody note.
-- Level 1: 40 red platforms, with nearby gaps for longer drops.
-- Level 2: 20 orange platforms, with larger gap offsets encouraging a bounce before each turn. Black tips beside both edges of every gap are lethal. Contact automatically restarts level 2, preserving completed red progress.
-- Level 3: 20 yellow platforms mixing one, two, and three gaps. One- and two-gap floors have wider openings. Only alternating floors have a black tip (one tip each); some floors also have an interior black patch, and some are hazard-free. Dying restarts yellow and preserves red and orange progress.
-- Levels opens a picker that pauses the game. Level 1 is always available; completing a level unlocks the next. Replay any unlocked stage independently. The three unbuilt stages remain unavailable.
-- Completion and per-level best times are saved in this browser. Each attempt has its own timer, reset on restart or death; opening the picker pauses it. Faster completed attempts replace the saved best.
-- Level 4: 20 green platforms with tall, striped blockers. When a wall reaches the unicorn, rotation stops; reverse direction to reach the gap around the other side. Walls alternate sides and respect the column depth.
-- Every completed level shows its time and a Next Level button, plus Retry and Choose Level. Progression waits for your choice. After green, future stages remain unavailable.
-- The seven-band rainbow HUD fills each colour after its level is completed. Red, orange, yellow, and green are playable.
-- Platforms grow lighter toward the bottom. Broken fragments respect column depth; the fixed-screen unicorn casts a soft shadow and leaves more stars and sparkles during faster falls.
+## How to play
 
-## Submission size
+- Drag or use the left and right arrow keys (or A and D) to rotate the tower.
+- Line up a gap beneath the unicorn to clear a platform.
+- Bounce on coloured surfaces and avoid black tips, stripes, and deadly floors.
+- Reverse direction when a wall blocks your path.
+- Each run waits for your first rotation before movement and timing begin.
 
-Only index.html is needed. game.zip contains that file, below both 13,000 and 13,312 bytes. Rebuild after edits with PowerShell:
+## Seven skies
 
-    Compress-Archive -LiteralPath index.html -DestinationPath game.zip -Force
-    Get-Item game.zip | Select-Object Name,Length
+Each main level introduces a different approach:
 
-## Verification
+1. **Ruby skies** — Follow gentle gaps and learn the rhythm of the bounce.
+2. **Apricot glow** — Bounce and turn while avoiding black tips.
+3. **Golden hour** — Find your route through multiple gaps and scattered hazards.
+4. **Emerald dream** — Change direction to navigate blocking walls.
+5. **Blue beyond** — Time your bounces to cross black stripes and turn around walls.
+6. **Indigo rush** — Alternate between bounce sections and long drops with deadly surfaces.
+7. **Over the rainbow** — Descend a 50-platform spiral to a final landing and fireworks celebration.
 
-Run node game.test.cjs for mocked-browser checks of level progression, rainbow completion, both black-tip collisions, level-only restart, safe bounces, all 20 bounce-and-turn orange floors, mixed yellow gap counts, sparse black tips, interior hazard patches and safe landing sections, four-level completion, Next Level transitions, blocker stops in both directions including large drags, all green alternate routes, saved unlocks and best times, picker pause/resume, and locked-level guards. Canvas drawing calls are exercised, but visual browser verification was unavailable because preview permission was declined.
+Complete levels to unlock the next sky and fill the rainbow. Replay unlocked levels to improve your saved best times. Hitting a black hazard restarts the current level.
 
+## Endless mode
 
+Keep dropping through a randomly generated tower until you hit a lethal surface. Every 10 platforms, the course switches between approaches inspired by the seven main levels. All seven styles appear in shuffled cycles, with a safe landing platform at each section entrance.
 
+Platforms use random rainbow colours, and each cleared platform plays a random musical note. Your score counts platforms cleared in one run, with a saved endless best separate from the main-level time records. When the run ends, review your score and try again.
 
+## Achievements and records
 
+- Endless achievements unlock at **10, 50, 100, and 200 platforms** in a single run.
+- **Complete all 7 levels** is one main-adventure achievement, with a progress bar showing how many levels you have finished.
+- Best times, endless records, level unlocks, and achievement progress are saved locally.
+
+## Game menu
+
+Open the menu to pause and access levels, endless mode, achievements, and settings.
+
+- **Flip controls** reverses keyboard and drag rotation.
+- **Rotate speed** ranges from **0.25× to 3×**, in **0.05× steps**. The default is **1×**, and your preference is saved.
+- **Sound** is on by default and begins after interaction. Muting stays in effect across retries and mode changes during the session.
+- **Restart run** starts the current level or endless mode again.
+- **Clear records** asks for confirmation before resetting records, achievements, and level unlocks. It ends the current run and returns you to the first level while preserving your settings.
+
+## A little magic
+
+Rainbow progress, shattering platforms, drifting shapes, and a sparkling unicorn trail bring the tower to life. The central column picks a dark shade from the seven rainbow base colours each run. Main levels play a melody as you descend, black hazards make a distinct impact sound, and every cleared platform has a **30% chance** of triggering a firework burst.

@@ -1,0 +1,14 @@
+const fs=require('fs');let s=fs.readFileSync('index.html','utf8');
+s=s.replace("previousState='intro',blockFlash=0", "previousState='intro',waitingForMove=true,blockFlash=0");
+s=s.replace('</style>', '#ready{position:absolute;top:28%;width:100%;text-align:center;pointer-events:none;color:#eee0ff;font-size:12px;letter-spacing:2px}\n</style>');
+s=s.replace('<div id="toast"></div>', '<div id="toast"></div><div id="ready">DRAG OR PRESS ← → TO BEGIN</div>');
+s=s.replace("function build(){$('#celebration')", "function build(){waitingForMove=true;$('#ready').style.display='block';$('#celebration')");
+s=s.replace('function rotate(delta){let p=', "function rotate(delta){if(state!=='playing')return;if(waitingForMove){if(!delta)return;waitingForMove=false;$('#ready').style.display='none'}let p=");
+s=s.replace("if(state!=='playing')return;totalTime+=dt;levelTime+=dt;clockHUD();rotate(dt*3.5*direction*(Number(left)-Number(right)));", "if(state!=='playing')return;rotate(dt*3.5*direction*(Number(left)-Number(right)));if(waitingForMove)return;totalTime+=dt;levelTime+=dt;clockHUD();");
+fs.writeFileSync('index.html',s);
+let t=fs.readFileSync('game.test.cjs','utf8').replaceAll('update(', 'step(');
+const helper="function step(dt){if(state==='playing'&&waitingForMove)rotate(.000001);update(dt)}";
+t=t.replace('vm.runInContext(`start();', 'vm.runInContext(`'+helper+'start();');
+t=t.replace('vm.runInContext(code,reloadBox);', 'vm.runInContext(code,reloadBox);vm.runInContext('+JSON.stringify(helper)+',reloadBox);');
+t=t.replace('vm.runInContext(code,freshBox);', 'vm.runInContext(code,freshBox);vm.runInContext('+JSON.stringify(helper)+',freshBox);');
+fs.writeFileSync('game.test.cjs',t);

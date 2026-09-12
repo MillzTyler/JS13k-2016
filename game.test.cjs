@@ -1,0 +1,37 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');const els=new Map(),noop=()=>{},ctx=new Proxy({createLinearGradient:()=>({addColorStop:noop}),createRadialGradient:()=>({addColorStop:noop})},{get:(o,k)=>o[k]||noop});const box={document:{querySelector(s){if(!els.has(s))els.set(s,{style:{},setAttribute(){},addEventListener(){},getContext(){return ctx}});return els.get(s)}},innerWidth:1000,innerHeight:900,devicePixelRatio:1,addEventListener(){},requestAnimationFrame(){},localStorage:{},console,assert};vm.createContext(box);vm.runInContext(fs.readFileSync('index.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1],box);
+vm.runInContext(`start();assert(completed.every(x=>!x));let frames=0;while(state==='playing'&&frames++<10000){let p=platforms.find(p=>!p.broken);if(p)angle=mod(Math.PI/2-p.start);update(1/60);if(frames%30===0)draw()}assert.equal(state,'won');assert(completed[0]);assert($('#dots').innerHTML.includes('#ff5670'));update(2);assert.equal(level,0);assert.equal(state,'won');$('#next').onclick();assert.equal(level,1);assert.equal(platforms.length,20);assert.equal(state,'playing');assert(platforms.every(p=>p.hazard===.38));assert.equal(passed,0);
+// Land in the centre of either black tip; restart must preserve red completion.
+for(let side of [-1,1]){let p=platforms[0];angle=mod(Math.PI/2-p.start-side*(p.width/2+p.hazard/2));ballY=p.y-1;vy=100;update(.02);assert.equal(state,'dying');draw();for(let i=0;i<60;i++)update(1/60);assert.equal(state,'playing');assert.equal(level,1);assert(completed[0]);assert.equal(passed,0)}
+// Gap is safe; ordinary orange contact bounces.
+let p=platforms[0];angle=mod(Math.PI/2-p.start);assert(gap(p)&&!danger(p));angle=0;ballY=-1;vy=100;update(.02);assert(vy<0&&state==='playing');
+// Complete orange by bouncing on each floor before aligning the gap.
+restartLevel();let bounced=new Set(),lastPass=0;frames=0;while(state==='playing'&&frames++<30000){let p=platforms.find(p=>!p.broken);if(p&&bounced.has(p))angle=mod(Math.PI/2-p.start);let previousVy=vy;update(1/60);if(previousVy>0&&vy<0&&p)bounced.add(p);if(frames%30===0)draw();assert(Math.abs(ballY-camera-100)<1e-8)}assert.equal(state,'won');assert.equal(passed,20);assert.equal(bounced.size,20);assert(completed[0]&&completed[1]);assert($('#dots').innerHTML.includes('#ffa34f'));
+
+$('#next').onclick();assert.equal(level,2);assert.equal(platforms.length,20);assert.equal(new Set(platforms.map(p=>p.splits)).size,3);
+// Every yellow opening remains usable; all painted areas match lethal collisions.
+for(let floor=0;floor<20;floor++){
+restartLevel();let p=platforms[floor];assert(blackZones(p).length<=2);assert.equal(p.tip>=0,floor%2===1);
+for(let k=0;k<p.splits;k++){restartLevel();p=platforms[floor];angle=mod(Math.PI/2-p.start-k*TAU/p.splits);assert(gap(p)&&!danger(p));ballY=p.y-1;vy=200;update(.04);assert(p.broken&&state==='playing');draw()}
+restartLevel();p=platforms[floor];for(let [lo,hi] of blackZones(p)){restartLevel();p=platforms[floor];angle=mod(Math.PI/2-(lo+hi)/2);ballY=p.y-1;vy=100;update(.02);assert.equal(state,'dying');draw();update(1);assert.equal(level,2);assert(completed[0]&&completed[1])}
+// Each platform keeps at least one completely safe tip to land on.
+restartLevel();p=platforms[floor];let safe=spans(p).flatMap(([lo,hi])=>[lo+.1,hi-.1]).filter(q=>!blackAt(p,q));assert(safe.length>=p.splits*2-1);angle=mod(Math.PI/2-safe[0]);ballY=p.y-1;vy=100;update(.02);assert.equal(state,'playing');assert(vy<0);draw();
+}
+// Complete yellow through a mix of its available routes.
+restartLevel();frames=0;while(state==='playing'&&frames++<10000){let p=platforms.find(p=>!p.broken);if(p)angle=mod(Math.PI/2-p.start-(passed%p.splits)*TAU/p.splits);update(1/60);if(frames%30===0)draw();assert(Math.abs(ballY-camera-100)<1e-8)}assert.equal(state,'won');assert.equal(passed,20);assert(completed.slice(0,3).every(Boolean));assert($('#dots').innerHTML.includes('#ffe06c'));assert.equal($('#bar').style.width,'100%');console.log('PASS: mixed yellow gaps, sparse hazards, safe tips, all three stages and render calls.');`,box);
+// Saved unlocks and per-level records survive fresh page contexts.
+const code=fs.readFileSync('index.html','utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
+const reloadBox={...box,localStorage:{...box.localStorage}};vm.createContext(reloadBox);vm.runInContext(code,reloadBox);
+vm.runInContext(`assert(completed.slice(0,3).every(Boolean));assert(bestTimes.slice(0,3).every(t=>t>0));selectLevel(1);assert.equal(level,1);assert(solo);assert.equal(levelTime,0);let oldTime=bestTimes[1];levelTime=oldTime+5;finish();assert.equal(bestTimes[1],oldTime);levelTime=oldTime/2;finish();assert(bestTimes[1]<oldTime);restartLevel();let frozenY=ballY;openPicker();update(.5);assert.equal(levelTime,0);assert.equal(ballY,frozenY);assert.equal(state,'picker');closePicker();assert.equal(state,'playing');assert(completed[0]);let keptLevel=level;selectLevel(4);assert.equal(level,keptLevel);`,reloadBox);
+const freshBox={...box,localStorage:{}};vm.createContext(freshBox);vm.runInContext(code,freshBox);
+vm.runInContext(`assert(unlocked(0));assert(!unlocked(1)&&!unlocked(2)&&!unlocked(3));openPicker();selectLevel(2);assert.equal(state,'picker');assert.equal(level,0);selectLevel(0);assert.equal(state,'playing');levelTime=10;finish();assert(completed[0]);assert(unlocked(1)&&!unlocked(2));selectLevel(1);assert.equal(levelTime,0);assert.equal(level,1);levelTime=2;die();update(1);assert.equal(level,1);assert.equal(levelTime,0);assert(completed[0]);assert.equal(bestTimes[1],null);`,freshBox);
+console.log('PASS: saved unlocks and records, locked-level guards, replay best times, paused picker, death/restart timing.');
+// Green unlocks from yellow and stops large drags at blockers in either direction.
+vm.runInContext(`assert.equal(level,2);assert.equal(state,'won');nextLevel();assert.equal(level,3);assert.equal(platforms.length,20);assert(platforms.every(p=>p.wall!==null));assert.equal(unlocked(4),false);
+for(let floor=0;floor<20;floor++){
+restartLevel();for(let i=0;i<floor;i++)platforms[i].broken=true;passed=floor;let p=platforms[floor],side=floor%2?-1:1;ballY=p.y;camera=ballY-100;vy=-265;angle=mod(Math.PI/2-p.start-side*1.5);rotate(side*TAU*2);let atStop=angle;assert(blockFlash>0);assert(Math.abs(Math.abs(Math.atan2(Math.sin(angle+p.wall-Math.PI/2),Math.cos(angle+p.wall-Math.PI/2)))-.25)<1e-8);rotate(side*TAU);assert(Math.abs(angle-atStop)<1e-8);rotate(-side*.15);assert(Math.abs(angle-atStop)>.1);
+let n=0;while(!p.broken&&state==='playing'&&n++<1000){if(!gap(p))rotate(-side*3.5/60);update(1/60);if(n%20===0)draw()}assert.equal(state,'playing');assert(p.broken,'Alternate route must clear floor '+floor);assert.equal(passed,floor+1);
+}
+// Full green run through physics and incremental rotation, with no angle teleporting.
+restartLevel();let steps=0;while(state==='playing'&&steps++<20000){let p=platforms.find(p=>!p.broken);if(p){let i=platforms.indexOf(p),side=i%2?-1:1;if(!gap(p))rotate(-side*3.5/60)}update(1/60);if(steps%30===0)draw()}assert.equal(state,'won');assert.equal(passed,20);assert(completed[3]);assert(bestTimes[3]>0);let finalLevel=level;nextLevel();assert.equal(level,finalLevel);assert($('.card').innerHTML.includes('MORE LEVELS COMING SOON'));`,box);
+console.log('PASS: Next Level transitions, green unlock, both blocker directions, large-drag clamping, all 20 alternate routes and full green completion.');
+
